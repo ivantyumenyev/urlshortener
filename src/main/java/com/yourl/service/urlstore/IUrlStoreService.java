@@ -1,7 +1,8 @@
-package com.yourl.service;
+package com.yourl.service.urlstore;
 
 public interface IUrlStoreService {
     String findUrlById(String id);
 
-    void storeUrl(String id, String url);
+    String storeURL(String url);
+
 }
