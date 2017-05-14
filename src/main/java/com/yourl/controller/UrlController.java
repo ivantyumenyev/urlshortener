@@ -36,7 +36,7 @@ public class UrlController {
     public void redirectToUrl(
             @PathVariable String id,
             @CookieValue(value = "userID", required = false, defaultValue = "") String userID,
-            HttpServletResponse resp) throws Exception {
+            HttpServletResponse response) throws Exception {
 
         if (!userID.isEmpty()){
             IUrlStoreService urlStoreService = userStoreService.findUrlStoreServiceByUser(userID);
@@ -45,10 +45,9 @@ public class UrlController {
                 final String url = urlStoreService.findUrlById(id);
 
                 if (url != null) {
-                    resp.addHeader("Location", url);
-                    resp.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+                    response.sendRedirect(url);
                 } else {
-                    resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+                    response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 }
             }
         }
@@ -100,4 +99,5 @@ public class UrlController {
         }
         return valid;
     }
+
 }
