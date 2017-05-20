@@ -4,8 +4,10 @@ import com.yourl.controller.dto.ShortenUrlRequest;
 import com.yourl.service.urlstore.IUrlStoreService;
 import com.yourl.service.userstore.IUserStoreService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,8 +19,8 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.IOException;
+import java.net.*;
 
 
 @Controller
@@ -60,9 +62,10 @@ public class UrlController {
                                    BindingResult bindingResult,
                                    @CookieValue(value = "userID", required = false, defaultValue = "") String userID
                                    ) {
+
         String url = request.getUrl();
         if (!isUrlValid(url)) {
-            bindingResult.addError(new ObjectError("url", "Invalid url format: " + url));
+            bindingResult.addError(new FieldError("url","url", "Invalid url: " + url));
         }
 
         ModelAndView modelAndView = new ModelAndView("shortener");
@@ -79,13 +82,13 @@ public class UrlController {
 
             IUrlStoreService urlStoreService = userStoreService.findUrlStoreServiceByUser(userID);
 
-            final String urlID = urlStoreService.storeURL(url);
+            if (urlStoreService != null) {
+                final String urlId = urlStoreService.storeURL(url);
+                String requestUrl = httpRequest.getRequestURL().toString();
 
-            String requestUrl = httpRequest.getRequestURL().toString();
-            String prefix = requestUrl.substring(0, requestUrl.indexOf(httpRequest.getRequestURI(),
-                "http://".length()));
+                modelAndView.addObject("shortenedUrl", requestUrl + urlId);
+            }
 
-            modelAndView.addObject("shortenedUrl", prefix + "/" + urlID);
         }
         return modelAndView;
     }
@@ -93,11 +96,12 @@ public class UrlController {
     private boolean isUrlValid(String url) {
         boolean valid = true;
         try {
-            new URL(url);
-        } catch (MalformedURLException e) {
+//            final Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress("10.0.0.1", 8080));
+            final URLConnection connection = new URL(url).openConnection();
+            connection.connect();
+        } catch (IOException e) {
             valid = false;
         }
         return valid;
     }
-
 }

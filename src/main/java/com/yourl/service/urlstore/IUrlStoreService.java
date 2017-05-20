@@ -5,4 +5,5 @@ public interface IUrlStoreService {
 
     String storeURL(String url);
 
+    boolean checkURLExperation(int lifeTime);
 }

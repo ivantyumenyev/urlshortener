@@ -1,47 +1,86 @@
 package com.yourl.service.urlstore;
 
-
-
-import com.google.common.collect.MapMaker;
-import com.yourl.service.urlstore.dto.ShortUrl;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class InMemoryUrlStoreService implements IUrlStoreService{
-    private Map<String, ShortUrl> urlByIdMap = new ConcurrentHashMap<>();
+    private BiMap<String, String> urlByIdMap = HashBiMap.create();
+    private Map<String, Integer> idCallsMap = new ConcurrentHashMap<>();
+    private Map<String, LocalDateTime> idCreateDateMap = new ConcurrentHashMap<>();
 
     private static final String ALPHA_NUM = "0123456789abcdefghijklmnopqrstuvwxyz";
+
     private static final int ID_LENGTH = 6;
 
     @Override
     public String findUrlById(String id) {
-        ShortUrl shortUrl = urlByIdMap.get(id);
-        if (shortUrl != null) {
-            shortUrl.addCall();
-            return shortUrl.getUrl();
+        String url = urlByIdMap.get(id);
+
+        if (url != null) {
+            addCall(id);
+            return url;
         } else {
             return "";
         }
+
     }
 
     @Override
     public String storeURL(String url) {
 
-        for (Map.Entry<String, ShortUrl> entry : urlByIdMap.entrySet()){
-            if (entry.getValue().getUrl().equals(url)) {
-                return entry.getKey();
-            }
+        String urlId = urlByIdMap.inverse().get(url);
+
+        if (urlId == null) {
+            do {
+                urlId = generateUrlId();
+            } while (urlByIdMap.containsKey(urlId));
+
         }
 
-        String urlID = generateUrlID();
-        urlByIdMap.put(urlID, new ShortUrl(url));
-        return urlID;
+        urlByIdMap.put(urlId, url);
+        idCreateDateMap.put(urlId, LocalDateTime.now());
+        return urlId;
+
     }
 
-    private String generateUrlID() {
+    @Override
+    public boolean checkURLExperation(int lifeTime) {
+        for (Map.Entry<String, LocalDateTime> idCreateDate : idCreateDateMap.entrySet()) {
+            if (ChronoUnit.SECONDS.between(idCreateDate.getValue(), LocalDateTime.now()) > lifeTime) {
+                System.out.println("I've just removed URL ID " + idCreateDate.getKey());
+                urlByIdMap.remove(idCreateDate.getKey());
+                idCallsMap.remove(idCreateDate.getKey());
+                idCreateDateMap.remove(idCreateDate.getKey());
+            }
+
+        }
+
+        return !idCreateDateMap.isEmpty();
+
+    }
+
+    private void addCall(String id) {
+        Integer calls = idCallsMap.get(id);
+        if (calls != null){
+            idCallsMap.put(id, ++calls);
+            System.out.println(calls);
+        } else {
+            idCallsMap.put(id, 1);
+            System.out.println("1");
+        }
+
+    }
+
+    private String generateUrlId() {
+
         StringBuffer sb = new StringBuffer(ID_LENGTH);
         for (int i = 0; i < ID_LENGTH; i++) {
             int ndx = (int)(Math.random() * ALPHA_NUM.length());
