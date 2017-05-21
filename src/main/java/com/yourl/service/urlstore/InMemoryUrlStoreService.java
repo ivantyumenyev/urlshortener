@@ -2,15 +2,12 @@ package com.yourl.service.urlstore;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
 public class InMemoryUrlStoreService implements IUrlStoreService{
     private BiMap<String, String> urlByIdMap = HashBiMap.create();
     private Map<String, Integer> idCallsMap = new ConcurrentHashMap<>();
@@ -18,7 +15,11 @@ public class InMemoryUrlStoreService implements IUrlStoreService{
 
     private static final String ALPHA_NUM = "0123456789abcdefghijklmnopqrstuvwxyz";
 
-    private static final int ID_LENGTH = 6;
+    private int idLength = 6;
+
+    public InMemoryUrlStoreService(int idLength) {
+        this.idLength = idLength;
+    }
 
     @Override
     public String findUrlById(String id) {
@@ -30,7 +31,6 @@ public class InMemoryUrlStoreService implements IUrlStoreService{
         } else {
             return "";
         }
-
     }
 
     @Override
@@ -81,8 +81,8 @@ public class InMemoryUrlStoreService implements IUrlStoreService{
 
     private String generateUrlId() {
 
-        StringBuffer sb = new StringBuffer(ID_LENGTH);
-        for (int i = 0; i < ID_LENGTH; i++) {
+        StringBuffer sb = new StringBuffer(idLength);
+        for (int i = 0; i < idLength; i++) {
             int ndx = (int)(Math.random() * ALPHA_NUM.length());
             sb.append(ALPHA_NUM.charAt(ndx));
         }

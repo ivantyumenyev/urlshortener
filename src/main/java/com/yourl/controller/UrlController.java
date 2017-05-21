@@ -5,6 +5,7 @@ import com.yourl.service.urlstore.IUrlStoreService;
 import com.yourl.service.userstore.IUserStoreService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
@@ -24,7 +25,14 @@ import java.net.*;
 
 
 @Controller
+//@PropertySource("classpath:application.properties")
 public class UrlController {
+
+//    @Value("${url.id.length:10}")
+//    private int ID_LENGTH;
+//
+//    @Value("${url.lifetime.seconds:6000}")
+//    private int URL_LIFETIME;
 
     @Autowired
     private IUserStoreService userStoreService;
